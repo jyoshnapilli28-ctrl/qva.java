@@ -1,70 +1,53 @@
 # QVA 2.0 Final Test Results
 
-Date: 2026-11-16. Commands below were run against this working tree. No production database was used.
+- **Source verified** `a5a79658296ea73f7828aa593d45a52de8ef8395` on `feature/qva-2.0`
+- **Reverification date** 16 November 2026
 
-## Environment
+The release freeze originally recorded a missing compiler and Maven. The original 78-test run's temporary files were unavailable for this review, and the older reports in the checkout did not contain the invitation suite. This report uses a fresh build from a Git archive of the published commit in a separate directory. All database and account fixtures were disposable.
 
-| Tool | Observed | Result |
-|---|---|---|
-| Node.js | v24.22.1 | Available |
-| npm | 11.9.0 | Available (prints existing unknown `http-proxy` config warning) |
-| Java | OpenJDK 21.0.13 runtime | Runtime only; does not match preferred Java 17 release setup |
-| `javac` | command not found | Backend compilation blocked |
-| Maven | command not found | Backend tests/package blocked |
+## Build and automated tests
 
-## Executed checks
+- Linux with Eclipse Temurin **17.0.21**, Maven **3.9.9**, Node **24.22.1**, and npm **11.9.0**.
+- `mvn -Pqva-web -DargLine="-javaagent:<Byte Buddy agent 1.14.13>" clean verify` passed, including Java compilation, the standard React build, and Spring Boot repackaging. The test JVM preloaded the agent because this workspace blocks Mockito's self-attachment.
+- Surefire reported **78 tests run, 0 failures, 0 errors, 0 skipped**. The XML reports independently agree with the Maven summary.
+- `npm run test:components` passed **10 tests in 3 files**. The opt-in build with `VITE_QVA_LOCAL_VAULT=1` also passed. Both builds compile the frontend.
+- Rebuilt `target/private-chat-server.jar`: 66,734,420 bytes. SHA-256: `e92b4b4361f8f4405cd63829cf750791c64b4227eb707e1a6cb11a2314a605fa`. The archive contains both the classic and React HTML entry points. The checksum identifies this reverification build.
 
-| Command | Result | Details |
-|---|---|---|
-| `npm run test:components` | PASS | 10 tests passed in 3 files, including 5 vault, 3 workspace, 2 messaging component tests. |
-| `npm run build` | PASS | TypeScript check and Vite production build succeeded. |
-| `VITE_QVA_LOCAL_VAULT=1 npm run build -- --outDir dist-vault` | PASS | Opt-in vault production build succeeded. Generated output was removed after recording. |
-| `python3 tools/test-migrations-raw.py` | PASS | Executed V1–V8 SQL in numeric order, checked expected tables and four seed rows, closed/reopened DB and confirmed state persisted. This was Python sqlite3, not Flyway/Spring migration testing. |
-| `npm test -- --reporter=line` | BLOCKED | 10 Playwright cases enumerated; failed at `QVA_TEST_PASSWORD` setup requirement; 6 skipped, 3 did not run. No packaged `QVA_TEST_BASE_URL` was available; packaged vault test did not execute. Exit code 1. |
-| `java -version` | PASS | Runtime reports OpenJDK 21.0.13. |
-| `javac -version` | BLOCKED | `/bin/bash: javac: command not found`. |
-| `mvn -v` | BLOCKED | `/bin/bash: mvn: command not found`. |
-| `git diff --check` | PASS | No whitespace errors in tracked diff. |
+## Surefire suite counts
 
-The first component-test attempt reported 9 passed and 1 failed because an existing Link-based login test lacked a router provider. The test was wrapped in `MemoryRouter`; the rerun passed all 10. The first TypeScript build also caught a missing parenthesis in the new invitation manager. It was fixed before the successful standard and vault-enabled builds. An initial raw-migration harness assertion used a mistaken table name; the corrected repeat is the passing script above. These local errors are retained here rather than hidden.
+| Suite | Passed |
+|---|---:|
+| `AuthAuditTest` | 1 |
+| `AuthenticationRegressionTest` | 10 |
+| `BackupRestoreTest` | 1 |
+| `CustomAccountsMigrationTest` | 11 |
+| `DeviceApprovalGateIntegrationTest` | 1 |
+| `DeviceIdentityIntegrationTest` | 6 |
+| `InvitationIntegrationTest` | 2 |
+| `MessagingIntegrationTest` | 1 |
+| `PrivateChatIntegrationTest` | 16 |
+| `RestApiTest` | 17 |
+| `RestartPersistenceTest` | 1 |
+| `StaticAssetTest` | 3 |
+| `WebSocketSecurityTest` | 8 |
+| **Total** | **78** |
 
-A prior attempt in this environment to launch the packaged Chromium vault run was blocked before browser interaction by `socket() failed: Operation not permitted (1)` and `ptrace: Operation not permitted (1)`. That was an environment failure, not a passing lifecycle test. No screenshot was captured.
+The invitation concurrency test launched two registrations against one token. It asserted one HTTP 201, one HTTP 409, and one new user row. The device approval gate test exercised the classic REST authorization and legacy WebSocket handshake gate with pending, approved, and revoked device states. The approved MockMvc request reached Spring's handshake and got HTTP 426 because it omitted the WebSocket version.
 
-## Not run / blocked
+## Packaged integration checks
 
-- Backend compilation, unit tests, integration tests, authorization regression, invitation Spring integration test, restart tests, packaged JAR build/startup: BLOCKED by missing Maven and Java compiler.
-- Flyway migration test and V1–V8 application startup: NOT RUN. Only the raw SQL smoke test above ran.
-- Packaged Playwright authentication, authorization, invite lifecycle, device, messaging, session and vault browser tests: BLOCKED; no packaged server and required test credentials/base URL were unavailable.
-- Real Windows 11 host startup, Tailscale machine sharing, access-control policy, firewall, reboot, backup/restore, and external-member onboarding: NOT RUN.
-- Real two-device messaging and MLS encryption/decryption: NOT RUN; MLS is not implemented.
+These were direct HTTP and database checks against the executable JAR. The application ran on loopback with disposable credentials and SQLite files.
 
-## Change list
+| Check | Verified result |
+|---|---|
+| Fresh Flyway migration | Production-profile startup applied V1–V8 in order, verified against `flyway_schema_history`. |
+| V7-to-V8 upgrade | Initialized a separate database with Flyway target V7, changed a fixture account's display name, then started with the regular target. V8 applied, the fixture change survived, and the new invitation table was empty. |
+| Packaged routes and authorization | Signed-out GETs to `/` and `/app/register` returned the respective HTML. HOST fixture login succeeded. Anonymous invitation access returned 401 and an approved MEMBER's invitation access returned 403. |
+| Invitation lifecycle | HOST created an invitation, valid redemption created a MEMBER, malformed username returned 400, and replay, expiry and revocation returned 409. |
+| Devices and persistence | New device started pending, HOST approval enabled the protected REST route, and HOST revocation persisted through a process restart. The member could sign in after restart, with device status REVOKED and protected REST access denied. Account and invitation records survived. |
 
-The full exact per-file status is included as `changed-files.txt` in the checkpoint ZIP. At this checkpoint, `git status --short` groups the current tree as follows:
+## Browser and deployment limits
 
-```text
-M pom.xml
-M src/main/java/com/privatechat/config/SecurityConfig.java
-M src/main/java/com/privatechat/config/WebMvcConfig.java
-M src/main/java/com/privatechat/exception/GlobalExceptionHandler.java
-M src/main/java/com/privatechat/repository/UserRepository.java
-M src/main/java/com/privatechat/service/UserDetailsServiceImpl.java
-M src/main/resources/application.properties
-?? docs/architecture/
-?? docs/qva2/
-?? docs/security/
-?? docs/testing/
-?? frontend/
-?? src/main/java/com/privatechat/config/QvaWebRoutes.java
-?? src/main/java/com/privatechat/operations/
-?? src/main/resources/application-prod.properties
-?? src/main/resources/db/migration/V4__workspace_devices.sql
-?? src/main/resources/db/migration/V5__direct_message_relay.sql
-?? src/main/resources/db/migration/V6__conversation_lifecycle.sql
-?? src/main/resources/db/migration/V7__device_crypto_identity.sql
-?? src/main/resources/db/migration/V8__qva_member_invitations.sql
-?? src/test/java/com/privatechat/operations/
-?? tools/
-```
-
-The untracked entries include earlier QVA 2.0 work and are intentionally preserved; the exact manifest distinguishes the full working tree, while the implementation report identifies changes made during this freeze. No commit, push, deployment or production migration was performed.
+- The packaged Playwright HTTP test passed. The browser session test stopped at Chromium startup with `socket() failed: Operation not permitted (1)` and a `ptrace` permission error. Interactive session behavior remains unverified.
+- The packaged vault lifecycle did not run. The vault component tests and opt-in build leave setup/unlock, session expiry, logout, inactivity locking, multi-tab locking, and restart behavior open in a real packaged browser.
+- Windows HOST deployment, live Tailscale sharing and firewall policy, real external-member onboarding, multiple physical devices, and production backup/restore were not tested. The production database and credentials were untouched.
