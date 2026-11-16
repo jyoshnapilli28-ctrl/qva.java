@@ -1,3 +1,5 @@
+> **Superseded deployment guide:** For the current QVA 2.0 freeze, follow [WINDOWS_HOST_SETUP.md](WINDOWS_HOST_SETUP.md), [TAILSCALE_MEMBER_ONBOARDING.md](TAILSCALE_MEMBER_ONBOARDING.md), and [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md). Older IP and tunnel instructions below are historical and must not be used for deployment.
+
 # QVA — FOUR-DEVICE PRODUCTION DEPLOYMENT GUIDE
 
 **Project:** QVA — Private Java-Based 4-Device Chat Application  

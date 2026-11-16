@@ -42,9 +42,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         String[] allowedOrigins = {
             "http://localhost:*",
             "http://127.0.0.1:*",
-            "http://100.*",
-            "https://*.trycloudflare.com",
-            "https://*.cloudflareaccess.com",
+            "https://*.ts.net",
             "https://localhost:*",
             "https://127.0.0.1:*"
         };

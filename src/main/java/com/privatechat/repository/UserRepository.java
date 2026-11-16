@@ -24,7 +24,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByIsActiveTrue();
 
     @Modifying
-    @Query("UPDATE User u SET u.lastLogin = :lastLogin WHERE u.id = :id")
-    void updateLastLogin(Long id, Instant lastLogin);
+    @Query("UPDATE User u SET u.lastLogin = :lastLogin WHERE u.username = :username")
+    void updateLastLogin(String username, Instant lastLogin);
 }
 

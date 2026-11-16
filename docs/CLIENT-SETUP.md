@@ -1,3 +1,5 @@
+> **Superseded setup guide:** Use [../TAILSCALE_MEMBER_ONBOARDING.md](../TAILSCALE_MEMBER_ONBOARDING.md) and [../QVA_INVITATION_GUIDE.md](../QVA_INVITATION_GUIDE.md) for current private access, invitations and device approval. Older raw-IP instructions below are historical.
+
 # Client Setup & User Guide
 
 This guide describes how to configure and use the Private Chat client on Windows laptops.

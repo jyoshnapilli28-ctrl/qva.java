@@ -1,3 +1,5 @@
+> **Superseded network guide:** Current QVA 2.0 remote access is loopback-bound Spring Boot behind private Tailscale Serve HTTPS. Follow [../WINDOWS_HOST_SETUP.md](../WINDOWS_HOST_SETUP.md) and [../TAILSCALE_MEMBER_ONBOARDING.md](../TAILSCALE_MEMBER_ONBOARDING.md). Do not follow the historical raw-IP instructions below.
+
 # Networking Guide
 
 ## Architecture

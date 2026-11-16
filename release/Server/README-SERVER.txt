@@ -1,79 +1,54 @@
 ================================================================================
-                    PRIVATE CHAT SERVER — OPERATOR GUIDE
+                         QVA WINDOWS HOST — QUICK START
 ================================================================================
 
-This package contains the central server for the 4-person private chat network.
+PREREQUISITES
+- Windows 11, Java 17+, and Tailscale installed and connected.
+- The approved QVA release package and the existing HOST account credentials.
+- Do not initialize a fresh production database over an existing one.
 
---------------------------------------------------------------------------------
-1. PREREQUISITES
---------------------------------------------------------------------------------
-- Windows 10 or 11 (64-bit)
-- Java 17 or later (Eclipse Adoptium Temurin recommended: https://adoptium.net)
-- Tailscale installed and connected (https://tailscale.com/download/windows)
+START
+1. Keep the existing data\chat.db and make a verified backup before upgrading.
+2. Double-click Start-Server.bat. The service binds only to 127.0.0.1.
+3. In an elevated or normal terminal as supported by Tailscale, run:
+       tailscale serve --bg 8080
+   Follow the displayed private HTTPS URL (the HOST's *.ts.net name) for member
+   configuration. Verify with `tailscale serve status`. Do not run `tailscale funnel`.
+4. Keep Windows Defender Firewall enabled. Do not add a public inbound rule, open
+   the router, or allow the whole Tailscale CGNAT range to reach port 8080. The
+   backend listens on loopback, so Tailscale Serve is the only remote app path.
+5. Open the private URL locally, sign in with the existing HOST account, create
+   invitations, and share the host machine with each external member separately.
 
---------------------------------------------------------------------------------
-2. QUICK START
---------------------------------------------------------------------------------
-1. Ensure Tailscale is running and connected:
-     tailscale up
-2. Double-click "Start-Server.bat".
-3. The launcher will:
-   - Verify Java 17+ is installed.
-   - Detect your machine's Tailscale IPv4 address (100.x.x.x).
-   - Create the "data/" directory if needed.
-   - Launch the Spring Boot server with SQLite database persistence.
-4. Note the displayed server address (e.g., http://100.x.x.x:8080).
-5. Share this IP address with the 3 client users so they can set it in their
-   client-config.ini file.
+STOP / RESTART
+- Press Ctrl+C in the server console and wait for the process to stop.
+- Start-Server.bat again. Verify `tailscale serve status` still shows private
+  Serve for port 8080; reapply `tailscale serve --bg 8080` if necessary.
+- To remove Serve, run `tailscale serve reset` only when intentionally disabling
+  member access. Never enable Funnel.
 
---------------------------------------------------------------------------------
-3. STOPPING THE SERVER
---------------------------------------------------------------------------------
-- Press CTRL+C in the terminal window.
-- The server will perform a graceful shutdown.
-- All messages and user data in "data/chat.db" are preserved.
-- Do NOT close the window by force (clicking X) if you want cleanly flushed WAL logs,
-  though SQLite WAL mode ensures crash resilience regardless.
+BACKUP / RESTORE
+- Back up the complete data directory while QVA is stopped, including chat.db and
+  any SQLite WAL/SHM files. Alternatively use SQLite's online backup API/tool.
+- Store encrypted copies in a separate protected location and verify a restore on
+  a disposable copy. Never test restore against the live HOST database.
+- Restore only while QVA is stopped, preserving file permissions, then start and
+  verify application health and expected accounts. Never delete or recreate the
+  production database as a troubleshooting step.
 
---------------------------------------------------------------------------------
-4. CONFIGURATION
---------------------------------------------------------------------------------
-Edit "server-config.properties":
-  SERVER_PORT=8080
+SLEEP AND STARTUP
+- In Windows Settings > System > Power, set sleep to Never while plugged in for
+  periods when QVA must be available. Keep normal screen lock enabled.
+- Add a startup task only after manual acceptance of the release. Run it under the
+  HOST Windows account, with a logged, restartable process; do not store QVA
+  passwords in the task command line. Confirm private Serve and health after reboot.
 
-If you change the port, ensure all clients update their client-config.ini.
-
---------------------------------------------------------------------------------
-5. DATABASE & BACKUPS
---------------------------------------------------------------------------------
-- SQLite Database: data/chat.db
-- WAL mode is active for optimal concurrent reads and durability.
-- To create a backup:
-  Copy "data/chat.db" into the "backups/" folder:
-    copy data\chat.db backups\chat-backup-%DATE:~10,4%%DATE:~4,2%%DATE:~7,2%.db
-
---------------------------------------------------------------------------------
-6. USER ACCOUNTS & PASSWORD MANAGEMENT
---------------------------------------------------------------------------------
-Four accounts are configured in the database:
-  jyoshna (Host laptop user), meghana (Client 1), yash (Client 2), yashuu (Client 3)
-
-To assign individual passwords securely before deployment:
-  Double-click "Set-Password.bat" or run:
-    Set-Password.bat jyoshna
-    Set-Password.bat meghana
-    Set-Password.bat yash
-    Set-Password.bat yashuu
-
-The utility prompts for the password, securely hashes it with BCrypt (cost 12),
-updates the database directly, and exits. Passwords are never logged or stored
-in plaintext. Do NOT distribute default shared passwords across users.
-
---------------------------------------------------------------------------------
-7. WINDOWS FIREWALL
---------------------------------------------------------------------------------
-If client machines on your Tailscale network cannot connect, allow port 8080:
-Run PowerShell as Administrator:
-  New-NetFirewallRule -DisplayName "Private Chat Server" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8080 -RemoteAddress "100.64.0.0/10"
+MACHINE SHARING
+- Share only this HOST machine with each intended external Tailscale account.
+- Review current Tailscale ACL/grant policy before adding or changing anything.
+  Restrict shared access to the QVA service port using Tailscale grants where the
+  current share/ACL model supports it, and retain Windows Defender Firewall.
+- Machine sharing alone does not guarantee app-only access. Validate from one
+  external test account before inviting the full group. The current environment
+  did not perform that external account test.
 ================================================================================
-

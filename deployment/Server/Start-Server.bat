@@ -54,45 +54,11 @@ if %JAVA_MAJOR% LSS 17 (
 echo  OK  Java %JAVA_VER_STR% detected
 
 REM --------------------------------------------------------------------------
-REM  2. Verify Tailscale is installed
+REM  2. Keep the application loopback-only; Tailscale Serve provides private HTTPS
 REM --------------------------------------------------------------------------
-echo [2/5] Checking Tailscale...
-where tailscale >nul 2>&1
-if errorlevel 1 (
-    REM Check common install paths
-    if exist "C:\Program Files\Tailscale\tailscale.exe" (
-        set "TAILSCALE_EXE=C:\Program Files\Tailscale\tailscale.exe"
-    ) else (
-        echo.
-        echo  WARNING: Tailscale not found in PATH.
-        echo  Clients can still connect on localhost for local testing,
-        echo  but remote Tailscale connections will NOT work.
-        echo.
-        echo  Install Tailscale from: https://tailscale.com/download/windows
-        echo.
-        set "TAILSCALE_IP=127.0.0.1"
-        goto :skip_tailscale
-    )
-) else (
-    set "TAILSCALE_EXE=tailscale"
-)
-
-REM Get Tailscale IP
-for /f "delims=" %%i in ('"%TAILSCALE_EXE%" ip --4 2^>nul') do set "TAILSCALE_IP=%%i"
-if "!TAILSCALE_IP!"=="" (
-    echo.
-    echo  WARNING: Tailscale is installed but no IPv4 address found.
-    echo  Is Tailscale connected? Run: tailscale up
-    echo.
-    echo  Falling back to 0.0.0.0 (all interfaces). Clients must use
-    echo  this machine's IP address to connect.
-    echo.
-    set "TAILSCALE_IP=0.0.0.0"
-)
-
-echo  OK  Tailscale IP: !TAILSCALE_IP!
-
-:skip_tailscale
+echo [2/5] Application will bind to 127.0.0.1 only.
+echo  Configure private Tailscale Serve after startup: tailscale serve --bg 8080
+echo  Do not enable Tailscale Funnel, router port forwarding, or public tunnels.
 
 REM --------------------------------------------------------------------------
 REM  3. Verify JAR file exists
@@ -122,27 +88,15 @@ if not exist "%DATA_DIR%" (
     echo  OK  Data directory exists: %DATA_DIR%
 )
 
-REM Load server-config.properties if present
+REM Load the application port from server-config.properties if present.
 set "CONFIG_FILE=%SCRIPT_DIR%\server-config.properties"
 set "SERVER_PORT=8080"
-set "SERVER_BIND_ADDRESS=auto"
 if exist "%CONFIG_FILE%" (
     for /f "eol=# tokens=1,2 delims==" %%a in (%CONFIG_FILE%) do (
         if "%%a"=="SERVER_PORT" set "SERVER_PORT=%%b"
-        if "%%a"=="SERVER_BIND_ADDRESS" set "SERVER_BIND_ADDRESS=%%b"
     )
 )
-
-set "BIND_IP=0.0.0.0"
-if "!SERVER_BIND_ADDRESS!"=="auto" (
-    if not "!TAILSCALE_IP!"=="" (
-        if not "!TAILSCALE_IP!"=="0.0.0.0" (
-            set "BIND_IP=!TAILSCALE_IP!"
-        )
-    )
-) else (
-    set "BIND_IP=!SERVER_BIND_ADDRESS!"
-)
+set "BIND_IP=127.0.0.1"
 
 REM --------------------------------------------------------------------------
 REM  5. Launch the server
@@ -150,9 +104,9 @@ REM --------------------------------------------------------------------------
 echo [5/5] Starting server...
 echo.
 echo  ---------------------------------------------------------------
-echo   Server address:  http://!TAILSCALE_IP!:%SERVER_PORT%
-echo   Bound interface: !BIND_IP!
-echo   Chat interface:  http://!TAILSCALE_IP!:%SERVER_PORT%/
+echo   Local app URL:   http://127.0.0.1:%SERVER_PORT%
+echo   Bound interface: 127.0.0.1 (loopback only)
+echo   Private URL:     Enable Tailscale Serve for this port
 echo   Database:        %DATA_DIR%\chat.db
 echo   Press CTRL+C to stop the server gracefully.
 echo  ---------------------------------------------------------------

@@ -1,14 +1,21 @@
 package com.privatechat;
 
+import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -37,6 +44,21 @@ class RestApiTest {
 
     @Autowired
     private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JdbcTemplate database;
+
+    private final Cookie approvedDevice = new Cookie("QVA_DEVICE", "R".repeat(43));
+
+    @BeforeEach
+    void addApprovedDeviceFixture() throws Exception {
+        String digest = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")
+                .digest(approvedDevice.getValue().getBytes(StandardCharsets.US_ASCII)));
+        database.update("""
+                INSERT OR IGNORE INTO qva_devices(id,user_id,name,credential_digest,status,registered_ms)
+                SELECT 'rest-api-fixture',id,'REST fixture browser',?,'APPROVED',1 FROM users WHERE username='jyoshna'
+                """, digest);
+    }
 
     // Mock the WebSocket broker so tests don't require a running STOMP broker
     @MockBean
@@ -150,7 +172,7 @@ class RestApiTest {
     @Test
     @WithMockUser(username = "jyoshna", roles = "USER")
     void usersListReturnsFourUsers() throws Exception {
-        mockMvc.perform(get("/api/users"))
+        mockMvc.perform(get("/api/users").cookie(approvedDevice))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.length()").value(4));
     }
@@ -168,14 +190,14 @@ class RestApiTest {
     @Test
     @WithMockUser(username = "jyoshna", roles = "USER")
     void messagesHistoryReturnsOk() throws Exception {
-        mockMvc.perform(get("/api/rooms/general/messages"))
+        mockMvc.perform(get("/api/rooms/general/messages").cookie(approvedDevice))
                .andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(username = "jyoshna", roles = "USER")
     void unknownRoomReturns400() throws Exception {
-        mockMvc.perform(get("/api/rooms/doesnotexist/messages"))
+        mockMvc.perform(get("/api/rooms/doesnotexist/messages").cookie(approvedDevice))
                .andExpect(status().isBadRequest());
     }
 

@@ -1,63 +1,25 @@
 ================================================================================
-                    PRIVATE CHAT CLIENT — USER GUIDE
+                         QVA MEMBER CLIENT — QUICK START
 ================================================================================
 
-Welcome to the Private Group Chat!
+1. Install Tailscale on your device and sign in with your own Tailscale account.
+2. Accept the QVA HOST machine-share invitation from the host operator.
+3. Confirm that Tailscale shows the shared host as available.
+4. Edit client-config.ini and set SERVER_URL to the exact private HTTPS *.ts.net
+   address provided by the host. The host must have Tailscale Serve enabled.
+5. Double-click Start-Client.bat. QVA will open in your browser.
+6. Open /register or select Create an account. Enter your private QVA invitation,
+   choose your own username and password, and create your QVA account.
+7. Register this device in QVA. It remains pending until the QVA HOST approves it.
+8. After approval, sign in with your own QVA credentials and use only conversations
+   for which your account is a member.
 
-You do NOT need Java, Maven, Docker, or any development tools installed.
-All you need is Windows and your standard web browser.
+Tailscale machine sharing grants network reachability only. It does not create a
+QVA account, approve a device, or grant HOST privileges. Do not share your QVA
+invitation with anyone else. If the invitation expires or is revoked, ask the
+HOST for a new one.
 
---------------------------------------------------------------------------------
-1. PREREQUISITES
---------------------------------------------------------------------------------
-- Windows 10 or 11
-- Web Browser: Google Chrome, Microsoft Edge, Mozilla Firefox, or Brave
-- Network connection:
-    * If connecting via Tailscale VPN: Tailscale connected to the private group
-    * If connecting via Cloudflare Tunnel: Any standard internet connection
-
---------------------------------------------------------------------------------
-2. SETUP (FIRST TIME ONLY)
---------------------------------------------------------------------------------
-1. Ask the server operator (jyoshna) for the SERVER_URL:
-   - For Tailscale VPN: http://100.x.x.x:8080
-   - For Cloudflare Tunnel: https://<subdomain>.trycloudflare.com
-2. Open "client-config.ini" in Notepad.
-3. Edit the line:
-     SERVER_URL=http://ENTER-SERVER-ADDRESS:8080
-   Replace it with the actual address, for example:
-     SERVER_URL=http://100.64.0.1:8080
-   or:
-     SERVER_URL=https://guam-way-aids-seven.trycloudflare.com
-4. Save and close the file.
-
---------------------------------------------------------------------------------
-3. LAUNCHING CHAT
---------------------------------------------------------------------------------
-1. Double-click "Start-Client.bat".
-2. The launcher will:
-   - Read the server URL from client-config.ini.
-   - Check network configuration (Tailscale or Cloudflare Tunnel).
-   - Verify connection to the server.
-   - Automatically open the chat room in your default browser.
-3. Sign in with your assigned username and password:
-     Usernames: jyoshna (Host), meghana, yash, yashuu
-     (Enter the unique password assigned to your account by the host operator).
-4. Start chatting! Enter messages in the input box and press Enter or click Send.
-
---------------------------------------------------------------------------------
-4. TROUBLESHOOTING
---------------------------------------------------------------------------------
-- "Cannot reach server":
-   * Confirm the server machine has "Start-Server.bat" running.
-   * If using Tailscale, ensure Tailscale is connected: run "tailscale status".
-   * Check that the URL in "client-config.ini" exactly matches the host's URL.
-   * If using direct Tailscale, confirm Windows Firewall allows port 8080 on host.
-
-- "Invalid username or password":
-   * Verify you are using your designated username in all lowercase.
-   * Check Caps Lock when typing your password.
-   * If this is your first time logging in, ask the host operator to run:
-       Set-Password.bat <your-username>
-     on the server laptop to initialize your credentials.
+Connection failures: confirm Tailscale is connected, the host is online, and the
+configured URL is the host's Tailscale Serve HTTPS name. Never use a public tunnel
+or ask the host to enable Tailscale Funnel or router port forwarding.
 ================================================================================

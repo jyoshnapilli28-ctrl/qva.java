@@ -1,6 +1,14 @@
 package com.privatechat.config;
 
 import com.privatechat.service.UserDetailsServiceImpl;
+import com.privatechat.operations.OperationsAccess;
+import com.privatechat.operations.WorkspaceSessions;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -58,16 +66,44 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http, OperationsAccess operations,
+                                          SessionRegistry sessions, WorkspaceSessions workspace) throws Exception {
+        var v2 = new AntPathRequestMatcher("/api/v2/**");
+        var legacyApi = new AntPathRequestMatcher("/api/**");
         http
             .authenticationProvider(authenticationProvider())
             .authorizeHttpRequests(auth -> auth
                 // Public static resources and login endpoint (permits both GET and HEAD)
                 .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/favicon.ico").permitAll()
-                .requestMatchers("/api/auth/login", "/api/auth/logout", "/api/auth/status", "/api/health").permitAll()
+                .requestMatchers(HttpMethod.GET, QvaWebRoutes.PUBLIC_RESOURCES).permitAll()
+                .requestMatchers(HttpMethod.HEAD, QvaWebRoutes.PUBLIC_RESOURCES).permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/logout", "/api/auth/status", "/api/auth/csrf",
+                        "/api/auth/register", "/api/health").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
-                // WebSocket handshake endpoint
-                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/api/v2/host/**").access((authentication, context) -> {
+                    var principal = authentication.get();
+                    return new AuthorizationDecision(principal != null && principal.isAuthenticated()
+                            && !(principal instanceof AnonymousAuthenticationToken)
+                            && operations.isHostRequest(principal.getName(), context.getRequest()));
+                })
+                // Preserve the classic chat route, but require the same approved-device boundary as /api/v2.
+                .requestMatchers("/api/rooms/**", "/api/users/**", "/ws/**").access((authentication, context) -> {
+                    var principal = authentication.get();
+                    return new AuthorizationDecision(principal != null && principal.isAuthenticated()
+                            && !(principal instanceof AnonymousAuthenticationToken)
+                            && operations.isApprovedDeviceRequest(principal.getName(), context.getRequest()));
+                })
+                .requestMatchers(v2).authenticated()
                 // Everything else requires authentication
                 .anyRequest().authenticated()
             )
@@ -79,6 +115,8 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutUrl("/api/auth/logout")
+                .addLogoutHandler((request, response, authentication) ->
+                        workspace.logout(request.getSession(false)))
                 .logoutSuccessHandler(logoutSuccessHandler())
                 .deleteCookies("JSESSIONID")
                 .invalidateHttpSession(true)
@@ -86,11 +124,13 @@ public class SecurityConfig {
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                .maximumSessions(1)
+                .maximumSessions(1).sessionRegistry(sessions)
             )
             .csrf(csrf -> csrf
-                // Disable CSRF for API endpoints used by the JS frontend
-                .ignoringRequestMatchers("/api/**", "/ws/**")
+                // Keep established legacy requests compatible. Account creation and every v2 mutation require CSRF.
+                .ignoringRequestMatchers(request -> legacyApi.matches(request) && !v2.matches(request)
+                                && !new AntPathRequestMatcher("/api/auth/register", "POST").matches(request),
+                        new AntPathRequestMatcher("/ws/**"))
             )
             .exceptionHandling(ex -> ex
                 // Return 401 JSON instead of redirect for API clients

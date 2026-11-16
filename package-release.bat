@@ -38,7 +38,7 @@ REM  Step 2: Build and Test Application
 REM --------------------------------------------------------------------------
 echo.
 echo [2/6] Building application and executing automated tests...
-call mvn clean package
+call mvn -Pqva-web clean verify
 if errorlevel 1 (
     echo.
     echo ERROR: Maven build or automated tests failed. Packaging aborted.

@@ -29,20 +29,20 @@ set "SERVER_URL="
 if not exist "%CONFIG_FILE%" (
     echo  Config file not found. Creating default configuration...
     echo.
-    echo  Please edit client-config.ini and set the server's Tailscale IP.
+    echo  Please edit client-config.ini and set the host's private Tailscale Serve HTTPS name.
     echo  Then double-click Start-Client.bat again.
     echo.
     (
         echo # Private Chat Client Configuration
         echo # ===================================
-        echo # Set SERVER_URL to the server's Tailscale IP address and port.
-        echo # Example: SERVER_URL=http://100.64.0.1:8080
+        echo # Set SERVER_URL to the host's private HTTPS *.ts.net URL.
+        echo # Example: SERVER_URL=https://qva-host.example-tailnet.ts.net
         echo #
-        echo # You can find the server's Tailscale IP by running:
-        echo #   tailscale ip -4
-        echo # on the server machine, then sharing it with all clients.
+        echo # Find the host's HTTPS name by running:
+        echo #   tailscale serve status
+        echo # on the HOST machine, then configure that name here.
         echo.
-        echo SERVER_URL=http://ENTER-SERVER-TAILSCALE-IP:8080
+        echo SERVER_URL=https://SET-HOST-TS-NET-NAME
     ) > "%CONFIG_FILE%"
 
     REM Open the config file in Notepad for editing
@@ -74,7 +74,7 @@ if "!SERVER_URL!"=="" (
     echo  ERROR: SERVER_URL is not set in client-config.ini
     echo.
     echo  Edit the file and set:
-    echo    SERVER_URL=http://100.x.x.x:8080
+    echo    SERVER_URL=https://qva-host.example-tailnet.ts.net
     echo.
     start notepad.exe "%CONFIG_FILE%"
     pause
@@ -96,43 +96,24 @@ if not errorlevel 1 (
 )
 
 REM --------------------------------------------------------------------------
-REM  3. Check Network Mode (Cloudflare Tunnel vs Tailscale)
+REM  3. Require private Tailscale HTTPS or localhost
 REM --------------------------------------------------------------------------
-echo !SERVER_URL! | findstr /i "^https://" >nul
+echo !SERVER_URL! | findstr /i "trycloudflare cloudflareaccess" >nul
 if not errorlevel 1 (
-    echo [2/3] Network mode: HTTPS / Cloudflare Tunnel detected ^(no Tailscale required^).
-    goto skip_tailscale
-)
-echo !SERVER_URL! | findstr /i "trycloudflare cloudflare" >nul
-if not errorlevel 1 (
-    echo [2/3] Network mode: Cloudflare Tunnel detected ^(no Tailscale required^).
-    goto skip_tailscale
+    echo ERROR: Public tunnel URLs are not supported. Use private Tailscale Serve.
+    exit /b 1
 )
 echo !SERVER_URL! | findstr /i "localhost 127.0.0.1" >nul
 if not errorlevel 1 (
-    echo [2/3] Network mode: Localhost connection detected.
+    echo [2/3] Localhost connection detected.
     goto skip_tailscale
 )
-
-echo [2/3] Checking Tailscale connectivity...
-where tailscale >nul 2>&1
+echo !SERVER_URL! | findstr /b /i "https://" >nul
 if errorlevel 1 (
-    REM Not in PATH, check common paths
-    if not exist "C:\Program Files\Tailscale\tailscale.exe" (
-        echo.
-        echo  WARNING: Tailscale does not appear to be installed.
-        echo  If connecting via VPN, you need Tailscale.
-        echo  Download from: https://tailscale.com/download/windows
-        echo.
-        echo  Attempting to open browser anyway (connection may fail)...
-        echo.
-    ) else (
-        echo  OK  Tailscale found
-    )
-) else (
-    echo  OK  Tailscale found
+    echo ERROR: Remote QVA connections require private HTTPS through Tailscale Serve.
+    exit /b 1
 )
-
+echo [2/3] Remote HTTPS configured. Ensure Tailscale is installed and connected.
 :skip_tailscale
 
 REM --------------------------------------------------------------------------

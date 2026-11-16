@@ -1,3 +1,5 @@
+> **Superseded setup guide:** Use [../WINDOWS_HOST_SETUP.md](../WINDOWS_HOST_SETUP.md) for the current loopback-only server and private Tailscale Serve configuration. Instructions below describe the earlier deployment model.
+
 # Server Setup & Administration Guide
 
 This guide describes how to configure, run, and administer the central Private Chat Server on Windows.

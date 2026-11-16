@@ -55,21 +55,12 @@ echo  OK  Java %JAVA_VER_STR% detected
 
 REM --------------------------------------------------------------------------
 REM --------------------------------------------------------------------------
-REM  2. Verify Tailscale is installed
+REM  2. Keep the application loopback-only; Tailscale Serve provides private HTTPS
 REM --------------------------------------------------------------------------
-echo [2/5] Checking Tailscale...
-set "TAILSCALE_EXE=C:\Program Files\Tailscale\tailscale.exe"
+echo [2/5] Application will bind to 127.0.0.1 only.
+echo  Configure private Tailscale Serve after startup: tailscale serve --bg 8080
+echo  Do not enable Tailscale Funnel, router port forwarding, or public tunnels.
 
-if not exist "%TAILSCALE_EXE%" echo ERROR: Tailscale executable not found.
-if not exist "%TAILSCALE_EXE%" goto :error_exit
-
-set "TAILSCALE_IP="
-for /f "delims=" %%i in ('"%TAILSCALE_EXE%" ip -4 2^>nul') do set "TAILSCALE_IP=%%i"
-
-if not defined TAILSCALE_IP echo ERROR: Tailscale is not connected.
-if not defined TAILSCALE_IP goto :error_exit
-
-echo OK Tailscale IP: !TAILSCALE_IP!
 REM  3. Verify JAR file exists
 REM --------------------------------------------------------------------------
 echo [3/5] Checking application JAR...
@@ -97,27 +88,15 @@ if not exist "%DATA_DIR%" (
     echo  OK  Data directory exists: %DATA_DIR%
 )
 
-REM Load server-config.properties if present
+REM Load the application port from server-config.properties if present.
 set "CONFIG_FILE=%SCRIPT_DIR%\server-config.properties"
 set "SERVER_PORT=8080"
-set "SERVER_BIND_ADDRESS=auto"
 if exist "%CONFIG_FILE%" (
     for /f "eol=# tokens=1,2 delims==" %%a in (%CONFIG_FILE%) do (
         if "%%a"=="SERVER_PORT" set "SERVER_PORT=%%b"
-        if "%%a"=="SERVER_BIND_ADDRESS" set "SERVER_BIND_ADDRESS=%%b"
     )
 )
-
-set "BIND_IP=0.0.0.0"
-if "!SERVER_BIND_ADDRESS!"=="auto" (
-    if not "!TAILSCALE_IP!"=="" (
-        if not "!TAILSCALE_IP!"=="0.0.0.0" (
-            set "BIND_IP=!TAILSCALE_IP!"
-        )
-    )
-) else (
-    set "BIND_IP=!SERVER_BIND_ADDRESS!"
-)
+set "BIND_IP=127.0.0.1"
 
 REM --------------------------------------------------------------------------
 REM  5. Launch the server
@@ -125,9 +104,9 @@ REM --------------------------------------------------------------------------
 echo [5/5] Starting server...
 echo.
 echo  ---------------------------------------------------------------
-echo   Server address:  http://!TAILSCALE_IP!:%SERVER_PORT%
-echo   Bound interface: !BIND_IP!
-echo   Chat interface:  http://!TAILSCALE_IP!:%SERVER_PORT%/
+echo   Local app URL:   http://127.0.0.1:%SERVER_PORT%
+echo   Bound interface: 127.0.0.1 (loopback only)
+echo   Private URL:     Enable Tailscale Serve for this port
 echo   Database:        %DATA_DIR%\chat.db
 echo   Press CTRL+C to stop the server gracefully.
 echo  ---------------------------------------------------------------

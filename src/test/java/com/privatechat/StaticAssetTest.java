@@ -22,6 +22,13 @@ class StaticAssetTest {
     private MockMvc mockMvc;
 
     @Test
+    void signedOutInviteesCanOpenTheRegistrationRoute() throws Exception {
+        mockMvc.perform(get("/app/register"))
+               .andExpect(status().isOk())
+               .andExpect(forwardedUrl("/app/index.html"));
+    }
+
+    @Test
     void testCssAssetServed() throws Exception {
         mockMvc.perform(get("/css/chat.css"))
                .andExpect(status().isOk())

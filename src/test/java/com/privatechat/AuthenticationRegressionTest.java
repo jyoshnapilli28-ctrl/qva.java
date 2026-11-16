@@ -4,8 +4,10 @@ import com.privatechat.config.PasswordManagementRunner;
 import com.privatechat.model.User;
 import com.privatechat.repository.UserRepository;
 import com.privatechat.service.UserDetailsServiceImpl;
+import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,6 +29,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -207,11 +210,17 @@ class AuthenticationRegressionTest {
     }
 
     @Test
-    @DisplayName("Read-only audit: verify production database state at release/Server/data/chat.db")
-    void testProductionDatabaseReadAudit() throws Exception {
-        String dbPath = "./release/Server/data/chat.db";
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+    @DisplayName("Verify initialized and placeholder accounts in a disposable migrated database")
+    void testMigratedDatabaseAccountAudit(@TempDir Path fixture) throws Exception {
+        String url = "jdbc:sqlite:" + fixture.resolve("chat.db");
+        Flyway.configure().dataSource(url, "", "").load().migrate();
+        try (Connection conn = DriverManager.getConnection(url);
              Statement stmt = conn.createStatement()) {
+            try (var update = conn.prepareStatement("UPDATE users SET password_hash=? WHERE username=?")) {
+                update.setString(1, passwordEncoder.encode("DisposableFixture123!"));
+                update.setString(2, "jyoshna");
+                assertThat(update.executeUpdate()).isEqualTo(1);
+            }
 
             // Integrity check
             try (ResultSet rs = stmt.executeQuery("PRAGMA integrity_check;")) {

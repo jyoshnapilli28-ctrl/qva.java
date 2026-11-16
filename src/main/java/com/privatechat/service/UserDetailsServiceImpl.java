@@ -60,9 +60,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Transactional
     public void recordLogin(String username) {
-        userRepository.findByUsernameIgnoreCase(username).ifPresent(user -> {
-            userRepository.updateLastLogin(user.getId(), Instant.now());
-        });
+        // The authenticated principal has the canonical username. Use one write
+        // so concurrent SQLite logins avoid upgrading a read transaction.
+        userRepository.updateLastLogin(username, Instant.now());
     }
 }
 

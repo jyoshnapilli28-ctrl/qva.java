@@ -1,0 +1,9 @@
+# Milestone 5 baseline and first slice
+
+The checkout is `feature/qva-2.0` at `45bf472`. Milestones 2.1–4 are present as accepted, uncommitted modifications and additions. The classic chat and the React workspace are separate. SecurityConfig requires authentication and CSRF for v2 mutations. OperationsAccess, DeviceStore and WorkspaceSessions resolve the account, device approval and session binding. V4 adds devices and local HOST grants. OperationsSocketConfig and LiveConnections handle per-device liveness. The live stream is scoped to host operations or the device itself and is unsuitable for conversation payloads.
+
+Evidence from the prior Linux rehearsal includes three component and nine browser tests, legacy bidirectional chat and history after restart. Windows and physical-device evidence remain pending. This baseline has no v2 private conversations, envelope relay, receipts or cryptographic client. No prior test proves any E2EE guarantees.
+
+The first slice adds V5 tables, MessagingController and DirectMessageStore under operations, the React Messages page and API client, one shell route, a default-disabled configuration flag and focused integration coverage. The REST relay derives the sender from the approved device session, stores a bounded opaque envelope, and provides stable ordered retrieval and device-scoped idempotency. Keep the UI to direct conversation creation and transport metadata until an approved client can encrypt and decrypt. Do not publish per-conversation payloads on the operations stream.
+
+Risks to review include stale device authorization, duplicated sends, access to unrelated conversation IDs, metadata disclosure, plaintext or key leakage through logs, and host control of the client bundle. The next messaging slice adds group lifecycle and durable receipts with actual client delivery and read semantics. The protocol decision remains an approval gate independent of this development relay.
