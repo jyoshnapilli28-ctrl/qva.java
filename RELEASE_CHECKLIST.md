@@ -1,23 +1,24 @@
 # QVA 2.0 Release Verification Checklist
 
-This list is for the separate release operation. Nothing below was deployed or committed during the final implementation freeze.
+Completed checks apply to the published implementation `a5a79658296ea73f7828aa593d45a52de8ef8395` and are supported by [the verification transcript](QVA_2.0_TEST_EVIDENCE.txt). Windows and production deployment checks remain separate.
 
 ## Source and build
 
 - [ ] Review complete diff and preserve all pre-existing work.
 - [ ] On Windows 11 with Java 17 Temurin, Maven 3.9.x and supported Node/npm, run `mvn -Pqva-web clean verify` (and the project's documented test commands).
-- [ ] Compile and run the invitation lifecycle, V1–V8 Flyway migration, existing backend regression and restart tests against disposable databases.
-- [ ] Run frontend components, standard production build and `VITE_QVA_LOCAL_VAULT=1` production build.
-- [ ] Run packaged JAR startup and Playwright session, invitation, device, conversation and vault lifecycle suites in a supported browser.
+- [x] Compile on Linux and verify invitations, Flyway V1–V8, the V7-to-V8 upgrade, backend regressions, and restart behavior with disposable databases.
+- [x] Run frontend component tests and the standard and `VITE_QVA_LOCAL_VAULT=1` production builds.
+- [x] Start the production-profile JAR on loopback and run the packaged Playwright HTTP check.
+- [ ] Run Playwright session, invitation, device, conversation and vault lifecycle suites in a supported browser. Chromium startup was blocked during Linux verification.
 - [ ] Scan built assets and source logs for secrets; verify vault password and private keys are absent from requests, server state and logs.
-- [ ] Verify production static assets include the built React workspace under `/app/` and preserve the classic root UI.
+- [x] Verify production static assets include the built React workspace under `/app/` and preserve the classic root UI.
 
 ## Database and identity
 
 - [ ] Back up the existing HOST data directory and verify a restore to a separate disposable path.
 - [ ] Review Flyway plan for additive V8 before a deliberate production upgrade; preserve accounts, credentials, messages and host grants.
 - [ ] Confirm exactly the existing authorized HOST grant remains; no new HOST is created.
-- [ ] Confirm a registered member is MEMBER, a new device is PENDING, host approval is separate, and revocation blocks future app access.
+- [x] Confirm on disposable fixtures that a registrant is MEMBER, a new device is PENDING, HOST approval is separate, and device revocation denies later protected REST access.
 
 ## Windows and Tailscale
 

@@ -3,12 +3,13 @@
 - **Source verified** `a5a79658296ea73f7828aa593d45a52de8ef8395` on `feature/qva-2.0`
 - **Reverification date** 16 November 2026
 
-The release freeze originally recorded a missing compiler and Maven. The original 78-test run's temporary files were unavailable for this review, and the older reports in the checkout did not contain the invitation suite. This report uses a fresh build from a Git archive of the published commit in a separate directory. All database and account fixtures were disposable.
+The release freeze originally recorded a missing compiler and Maven. The original 78-test run's temporary files were unavailable for this review, and the older reports in the checkout did not contain the invitation suite. The later verification used a Git archive of the published commit and disposable database and account fixtures. See [the original verification transcript](QVA_2.0_TEST_EVIDENCE.txt). This documentation update reconciles the recorded evidence.
 
 ## Build and automated tests
 
 - Linux with Eclipse Temurin **17.0.21**, Maven **3.9.9**, Node **24.22.1**, and npm **11.9.0**.
 - `mvn -Pqva-web -DargLine="-javaagent:<Byte Buddy agent 1.14.13>" clean verify` passed, including Java compilation, the standard React build, and Spring Boot repackaging. The test JVM preloaded the agent because this workspace blocks Mockito's self-attachment.
+- Java 17 compiled 49 production source files and 13 test source files.
 - Surefire reported **78 tests run, 0 failures, 0 errors, 0 skipped**. The XML reports independently agree with the Maven summary.
 - `npm run test:components` passed **10 tests in 3 files**. The opt-in build with `VITE_QVA_LOCAL_VAULT=1` also passed. Both builds compile the frontend.
 - Rebuilt `target/private-chat-server.jar`: 66,734,420 bytes. SHA-256: `e92b4b4361f8f4405cd63829cf750791c64b4227eb707e1a6cb11a2314a605fa`. The archive contains both the classic and React HTML entry points. The checksum identifies this reverification build.
@@ -48,6 +49,6 @@ These were direct HTTP and database checks against the executable JAR. The appli
 
 ## Browser and deployment limits
 
-- The packaged Playwright HTTP test passed. The browser session test stopped at Chromium startup with `socket() failed: Operation not permitted (1)` and a `ptrace` permission error. Interactive session behavior remains unverified.
+- The packaged Playwright HTTP test passed. One browser session test failed at launch because the workspace blocked Chromium with `socket() failed: Operation not permitted (1)` and `ptrace: Operation not permitted (1)`. Interactive session behavior remains unverified.
 - The packaged vault lifecycle did not run. The vault component tests and opt-in build leave setup/unlock, session expiry, logout, inactivity locking, multi-tab locking, and restart behavior open in a real packaged browser.
 - Windows HOST deployment, live Tailscale sharing and firewall policy, real external-member onboarding, multiple physical devices, and production backup/restore were not tested. The production database and credentials were untouched.

@@ -1,0 +1,80 @@
+Published source: a5a79658296ea73f7828aa593d45a52de8ef8395
+Verified on 16 November 2026. Eclipse Temurin 17.0.21, Maven 3.9.9, Node 24.22.1, npm 11.9.0.
+Maven command: mvn -Pqva-web -DargLine="-javaagent:<Byte Buddy 1.14.13>" clean verify
+JAR: 66734420 bytes; SHA-256 e92b4b4361f8f4405cd63829cf750791c64b4227eb707e1a6cb11a2314a605fa
+
+Maven log excerpts
+[INFO] Compiling 49 source files with javac [debug release 17] to target/classes
+[INFO] Compiling 13 source files with javac [debug release 17] to target/test-classes
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.93 s -- in com.privatechat.AuthAuditTest
+[INFO] Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.447 s -- in com.privatechat.RestApiTest
+[INFO] Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 8.958 s -- in com.privatechat.CustomAccountsMigrationTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.669 s -- in com.privatechat.StaticAssetTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.158 s -- in com.privatechat.WebSocketSecurityTest
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.705 s -- in com.privatechat.AuthenticationRegressionTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.697 s -- in com.privatechat.BackupRestoreTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.938 s -- in com.privatechat.RestartPersistenceTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.025 s -- in com.privatechat.operations.DeviceApprovalGateIntegrationTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 13.49 s -- in com.privatechat.operations.DeviceIdentityIntegrationTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.197 s -- in com.privatechat.operations.InvitationIntegrationTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.813 s -- in com.privatechat.operations.MessagingIntegrationTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.287 s -- in com.privatechat.PrivateChatIntegrationTest
+[INFO] Tests run: 78, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+
+Verified Surefire XML test cases
+PASS classicRestAndWebSocketHandshakeRequireApprovedDeviceAndRespectRevocation
+PASS invitationIsHashedSingleUseMemberOnlyAndRevocable
+PASS onlyOneConcurrentRequestCanRedeemAnInvitation
+PASS signedOutInviteesCanOpenTheRegistrationRoute
+
+Frontend log excerpts
+ Test Files  3 passed (3)
+      Tests  10 passed (10)
+> tsc --noEmit && vite build --outDir /tmp/qva-doc-vault
+✓ built in 6.28s
+
+Packaged integration transcript
+PASS packaged production-profile startup and fresh Flyway V1–V8
+PASS classic and signed-out registration routes, HOST and MEMBER authorization, invitation lifecycle, device approval and revocation
+PASS packaged restart retains account, invites, revoked device and REST denial
+PASS packaged Flyway V7-to-V8 upgrade preserves fixture account and creates invitation table
+Flyway log excerpts:
+fresh.log
+12:34:05 INFO  [main] o.f.core.internal.command.DbMigrate - Current version of schema "main": << Empty Schema >>
+12:34:05 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "1 - initial schema"
+12:34:05 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "2 - fix user password hashes"
+12:34:05 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "3 - rename accounts to custom users"
+12:34:05 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "4 - workspace devices"
+12:34:05 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "5 - direct message relay"
+12:34:05 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "6 - conversation lifecycle"
+12:34:05 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "7 - device crypto identity"
+12:34:05 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "8 - qva member invitations"
+12:34:05 INFO  [main] o.f.core.internal.command.DbMigrate - Successfully applied 8 migrations to schema "main", now at version v8 (execution time 00:00.043s)
+restart.log
+12:34:29 INFO  [main] o.f.core.internal.command.DbMigrate - Current version of schema "main": 8
+12:34:29 INFO  [main] o.f.core.internal.command.DbMigrate - Schema "main" is up to date. No migration necessary.
+v7.log
+12:34:46 INFO  [main] o.f.core.internal.command.DbMigrate - Current version of schema "main": << Empty Schema >>
+12:34:46 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "1 - initial schema"
+12:34:46 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "2 - fix user password hashes"
+12:34:46 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "3 - rename accounts to custom users"
+12:34:46 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "4 - workspace devices"
+12:34:46 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "5 - direct message relay"
+12:34:46 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "6 - conversation lifecycle"
+12:34:46 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "7 - device crypto identity"
+12:34:46 INFO  [main] o.f.core.internal.command.DbMigrate - Successfully applied 7 migrations to schema "main", now at version v7 (execution time 00:00.016s)
+v8.log
+12:34:58 INFO  [main] o.f.core.internal.command.DbMigrate - Current version of schema "main": 7
+12:34:58 INFO  [main] o.f.core.internal.command.DbMigrate - Migrating schema "main" to version "8 - qva member invitations"
+12:34:58 INFO  [main] o.f.core.internal.command.DbMigrate - Successfully applied 1 migration to schema "main", now at version v8 (execution time 00:00.005s)
+
+Playwright transcript excerpts
+[1/2] tests/session.spec.ts:17:1 › restores the session across direct routes and supports keyboard navigation
+    [pid=297][err] [297:297:1116/123420.020991:FATAL:chrome/browser/process_singleton_posix.cc:297] Check failed: . socket() failed: Operation not permitted (1)
+    [pid=297][err] [1116/123420.022498:ERROR:third_party/crashpad/crashpad/util/linux/scoped_ptrace_attach.cc:27] ptrace: Operation not permitted (1)
+      - [pid=297][err] [297:297:1116/123420.020991:FATAL:chrome/browser/process_singleton_posix.cc:297] Check failed: . socket() failed: Operation not permitted (1)
+      - [pid=297][err] [1116/123420.022498:ERROR:third_party/crashpad/crashpad/util/linux/scoped_ptrace_attach.cc:27] ptrace: Operation not permitted (1)
+[2/2] tests/session.spec.ts:96:1 › packaged JAR keeps both interfaces and protects the existing member API
+  1 failed
+  1 passed (3.7s)

@@ -7,7 +7,7 @@
 - Tailscale machine sharing, tailnet ACL/grants, Windows Defender Firewall, QVA credentials, QVA device approval and conversation membership are distinct controls. All must be reviewed.
 - Existing HOST grants remain database-backed. This freeze adds no HOST grant endpoint and changes no production credentials or grants.
 - Session cookies are HttpOnly and SameSite=Lax; the production profile sets Secure. External member access must use HTTPS.
-- Classic REST (`/api/rooms/**`, `/api/users/**`) and legacy `/ws/**` now require an approved QVA device as well as an authenticated session. This gate was added in the final freeze and its backend integration test is unexecuted here.
+- Classic REST (`/api/rooms/**`, `/api/users/**`) and legacy `/ws/**` now require an approved QVA device as well as an authenticated session. The backend integration test verified approval and revocation at the REST and WebSocket handshake boundary. See [Final test results](FINAL_TEST_RESULTS.md).
 
 ## M6.3 local vault
 
@@ -29,7 +29,7 @@
 ## Account invitations
 
 - Tokens are 256-bit random values; only their SHA-256 hashes are persisted. Redemption uses a conditional database update and runs transactionally with account creation and audit insertion. New accounts default to MEMBER and device approval remains independent.
-- Rate limiting is process-local, so it resets on restart and is not a distributed/shared limiter. Backend integration tests were not run here.
+- Rate limiting is process-local, so it resets on restart and is not a distributed/shared limiter. The backend integration tests passed, including concurrent single-use redemption. See [Final test results](FINAL_TEST_RESULTS.md).
 
 ## Logs and data
 

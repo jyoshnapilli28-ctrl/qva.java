@@ -18,7 +18,7 @@
 
 A fresh run from the published source verified Java 17 compilation and the executable Maven build. Surefire reported **78 passed, 0 failures, 0 errors, 0 skipped**. The frontend passed **10 component tests**, and the standard and opt-in vault builds succeeded.
 
-The packaged JAR ran against disposable SQLite databases. The checks covered a fresh V1–V8 Flyway migration, a V7-to-V8 upgrade that preserved a fixture account, signed-out registration, HOST and MEMBER permissions, invitation expiry and revocation, device approval and revocation, and persistence across restart. The concurrent redemption case ran in the backend integration suite. See [Final test results](FINAL_TEST_RESULTS.md) for the command, suite counts, and scope of each check.
+The packaged JAR ran against disposable SQLite databases. The checks covered a fresh V1–V8 Flyway migration, a V7-to-V8 upgrade that preserved a fixture account, signed-out registration, HOST and MEMBER permissions, invitation expiry and revocation, device approval and revocation, and persistence across restart. The concurrent redemption case ran in the backend integration suite. See [Final test results](FINAL_TEST_RESULTS.md) for the command, suite counts, and scope of each check, and [the verification transcript](QVA_2.0_TEST_EVIDENCE.txt) for the original evidence.
 
 ## Open verification and product limits
 
@@ -27,4 +27,4 @@ The packaged JAR ran against disposable SQLite databases. The checks covered a f
 - Device revocation blocks future authorization. It cannot recall content or keys already copied. HOST member suspension is not implemented.
 - Windows startup, private Tailscale access, real external-member onboarding, multiple physical devices, production backup/restore, and reboot recovery remain unverified.
 
-This follow-up updates the two release reports. The source under test is the published implementation above. All application runs used disposable databases, and no deployment or production migration was performed.
+This documentation follow-up records evidence for the published implementation above. All application runs used disposable databases, and no deployment or production migration was performed.
